@@ -47,6 +47,7 @@ const Login = ({ onLoginSuccess }) => {
     }
     // Directly accept login for demonstration purposes.
     alert('Login successful!');
+    localStorage.setItem('isAuthenticated', 'true');  // Save auth state to localStorage
     onLoginSuccess();
   };
 
@@ -271,8 +272,17 @@ const SearchVendor = () => {
 
 // Main App component with authentication, fancy navigation, and logout
 const App = () => {
-  const [currentPage, setCurrentPage] = useState('home'); // options: home, registration, allVendors, search
+  const [currentPage, setCurrentPage] = useState('login'); // Show login first
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Check if the user is already logged in (via localStorage) when the app loads
+  useEffect(() => {
+    const authStatus = localStorage.getItem('isAuthenticated');
+    if (authStatus === 'true') {
+      setIsAuthenticated(true);
+      setCurrentPage('home');
+    }
+  }, []);
 
   // Callback for successful login
   const handleLoginSuccess = () => {
@@ -280,15 +290,12 @@ const App = () => {
     setCurrentPage('home');
   };
 
-  // Logout function clears authentication
+  // Logout function clears authentication and localStorage
   const handleLogout = () => {
     setIsAuthenticated(false);
-    setCurrentPage('home');
+    localStorage.removeItem('isAuthenticated');
+    setCurrentPage('login');
   };
-
-  if (!isAuthenticated) {
-    return <Login onLoginSuccess={handleLoginSuccess} />;
-  }
 
   const renderPage = () => {
     switch (currentPage) {
@@ -300,6 +307,8 @@ const App = () => {
         return <AllVendors />;
       case 'search':
         return <SearchVendor />;
+      case 'login':
+        return <Login onLoginSuccess={handleLoginSuccess} />;
       default:
         return <Home />;
     }
@@ -316,7 +325,7 @@ const App = () => {
           <button className="nav-btn" onClick={() => setCurrentPage('registration')}>Registration</button>
           <button className="nav-btn" onClick={() => setCurrentPage('allVendors')}>All Vendors</button>
           <button className="nav-btn" onClick={() => setCurrentPage('search')}>Search</button>
-          <button className="nav-btn logout" onClick={handleLogout}>Logout</button>
+          {isAuthenticated && <button className="nav-btn logout" onClick={handleLogout}>Logout</button>}
         </div>
       </nav>
       <div className="content">{renderPage()}</div>
