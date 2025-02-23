@@ -1,38 +1,181 @@
+/* Global Styles */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #f0f2f5;
+  color: #333;
+}
+
 .App {
   text-align: center;
-}
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+}
+
+/* Fancy Navbar */
+.navbar {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  background: linear-gradient(135deg, #6a11cb, #2575fc);
+  padding: 10px 30px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
-.App-link {
-  color: #61dafb;
+.logo {
+  color: #fff;
+  margin: 0;
+  font-size: 1.8rem;
 }
 
-@keyframes App-logo-spin {
+.nav-right {
+  display: flex;
+  gap: 15px;
+}
+
+.nav-btn {
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  padding: 8px 15px;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.nav-btn:hover {
+  background: #fff;
+  transform: scale(1.05);
+}
+
+.nav-btn.logout {
+  background: #ff4d4d;
+  color: #fff;
+}
+
+.nav-btn.logout:hover {
+  background: #e60000;
+}
+
+/* Page Container */
+.page {
+  flex: 1;
+  padding: 30px;
+  animation: fadeIn 0.5s ease;
+}
+
+/* Login Page Image */
+.login-image-container {
+  margin-bottom: 20px;
+}
+
+.login-img {
+  width: 100%;
+  max-width: 300px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Home Page Image */
+.home-image-container {
+  margin-bottom: 20px;
+}
+
+.home-img {
+  width: 100%;
+  max-width: 600px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Form Styles */
+.form-container {
+  max-width: 400px;
+  margin: 20px auto;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.input-field {
+  padding: 12px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  transition: border 0.3s ease;
+}
+
+.input-field:focus {
+  border-color: #6a11cb;
+  outline: none;
+}
+
+/* Button Styles */
+.btn {
+  padding: 12px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.btn.primary {
+  background: #6a11cb;
+  color: #fff;
+}
+
+.btn.primary:hover {
+  background: #5a0db1;
+}
+
+.btn.secondary {
+  background: #2575fc;
+  color: #fff;
+}
+
+.btn.secondary:hover {
+  background: #1f65d8;
+}
+
+/* Styled Table */
+.styled-table {
+  width: 90%;
+  max-width: 800px;
+  margin: 20px auto;
+  border-collapse: collapse;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.styled-table th,
+.styled-table td {
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+.styled-table th {
+  background: #6a11cb;
+  color: #fff;
+}
+
+.styled-table tr:nth-child(even) {
+  background: #f9f9f9;
+}
+
+/* Search Result */
+.search-result {
+  margin-top: 20px;
+}
+
+/* Fade In Animation */
+@keyframes fadeIn {
   from {
-    transform: rotate(0deg);
+    opacity: 0;
   }
   to {
-    transform: rotate(360deg);
+    opacity: 1;
   }
 }
