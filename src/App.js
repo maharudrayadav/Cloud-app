@@ -103,7 +103,7 @@ const Registration = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    fetch('https://cloudvendor-1.onrender.com/cloudvendor', {
+    fetch('extensive-marguerite-yaharudrayadav-3e2385cd.koyeb.app/cloudvendor', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(vendorData)
@@ -173,7 +173,7 @@ const AllVendors = () => {
   const [vendors, setVendors] = useState([]);
 
   const fetchVendors = () => {
-    fetch('https://cloudvendor-1.onrender.com/cloudvendor', {
+    fetch('extensive-marguerite-yaharudrayadav-3e2385cd.koyeb.app//cloudvendor', {
       headers: { 'Content-Type': 'application/json' }
     })
       .then((res) => res.json())
