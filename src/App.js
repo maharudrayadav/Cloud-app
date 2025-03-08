@@ -487,7 +487,7 @@ const ResultShow = () => {
 
   // Fetch results from the updated API
   useEffect(() => {
-    fetch("https://cloudvendor-1.onrender.com//cloudvendor/cloudsets", {
+    fetch("https://cloudvendor-1.onrender.com/cloudvendor/cloudsets", {
       headers: { "Content-Type": "application/json" },
     })
       .then((res) => res.json())
