@@ -370,8 +370,8 @@ const SearchVendor = () => {
                   alert("No image available");
             }
             }}
-  style={{ cursor: "pointer" }}
-/>
+        style={{ cursor: "pointer" }}
+                  />
 
                   </button>
                 </td>
@@ -402,7 +402,7 @@ const ResultAddition = () => {
 
     const resultJson = JSON.stringify(formData); // Prepare the data for API
 
-    fetch("https://cloudvendor-1.onrender.com//cloudvendor/set", {
+    fetch("https://cloudvendor-1.onrender.com/cloudvendor/set", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
