@@ -384,6 +384,177 @@ const SearchVendor = () => {
   );
 };
 
+const ResultAddition = () => {
+  const [formData, setFormData] = useState({
+    vendorId: "",
+    vendorName: "",
+    subject: "",
+    marks: "",
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    const resultJson = JSON.stringify(formData); // Prepare the data for API
+
+    fetch("https://cloudvendor-1.onrender.com//cloudvendor/set", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: resultJson, // Send data as JSON
+    })
+      .then((res) => res.json()) // Convert response to JSON
+      .then((data) => {
+        if (data.message === "Cloud Vendor Created Successfully with PDF!") {
+          alert("Vendor registration successful with PDF!"); // Display success alert
+        } else {
+          alert("Result saved successfully!"); // Display general success message
+        }
+
+        // Reset the form data
+        setFormData({
+          vendorId: "",
+          vendorName: "",
+          subject: "",
+          marks: "",
+        });
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        alert("Cloud Vendor Created Successfully with PDF!");
+      });
+  };
+
+  return (
+    <div className="page registration">
+      <h1>Vendor Registration</h1>
+      <form onSubmit={handleSubmit} className="form-container">
+        <input
+          type="text"
+          name="vendorId"
+          placeholder="Vendor ID"
+          value={formData.vendorId}
+          onChange={handleChange}
+          required
+          className="input-field"
+        />
+        <input
+          type="text"
+          name="vendorName"
+          placeholder="Vendor Name"
+          value={formData.vendorName}
+          onChange={handleChange}
+          required
+          className="input-field"
+        />
+        <input
+          type="text"
+          name="subject"
+          placeholder="Subject"
+          value={formData.subject}
+          onChange={handleChange}
+          required
+          className="input-field"
+        />
+        <input
+          type="text"
+          name="marks"
+          placeholder="Marks"
+          value={formData.marks}
+          onChange={handleChange}
+          required
+          className="input-field"
+        />
+        <button type="submit" className="btn primary">
+          Register
+        </button>
+      </form>
+    </div>
+  );
+};
+
+
+
+const ResultShow = () => {
+  const [results, setResults] = useState([]);
+  const [selectedImage, setSelectedImage] = useState(null);
+
+  // Fetch results from the updated API
+  useEffect(() => {
+    fetch("https://cloudvendor-1.onrender.com//cloudvendor/cloudsets", {
+      headers: { "Content-Type": "application/json" },
+    })
+      .then((res) => res.json())
+      .then((data) => setResults(data))
+      .catch((error) => console.error("Error fetching results:", error));
+  }, []);
+
+  return (
+    <div className="page result-show">
+      <h1>Result Show</h1>
+      <table className="styled-table">
+        <thead>
+          <tr>
+            <th>Vendor ID</th>
+            <th>Subject</th>
+            <th>Marks</th>
+            <th>Vendor PDF</th>
+          </tr>
+        </thead>
+        <tbody>
+          {results.map((result, index) => (
+            <tr key={index}>
+              <td>{result.vendorId}</td>
+              <td>{result.subject ? result.subject : "N/A"}</td>
+              <td>{result.marks ? result.marks : "N/A"}</td>
+              <td>
+                {result.vendorPdf ? (
+                  <Eye
+                    className="eye-icon"
+                    onClick={() => {
+                      const pdfData = result.vendorPdf;
+                      const pdfBlob = new Blob([new Uint8Array(atob(pdfData).split("").map((c) => c.charCodeAt(0)))], {
+                        type: "application/pdf",
+                      });
+                      const pdfUrl = URL.createObjectURL(pdfBlob);
+                      const newTab = window.open();
+                      newTab.document.write(
+                        `<iframe src="${pdfUrl}" width="100%" height="100%" style="border: none;"></iframe>`
+                      );
+                      newTab.document.title = `Vendor PDF ${result.vendorId}`;
+                    }}
+                    style={{ cursor: "pointer" }}
+                  />
+                ) : (
+                  "No PDF available"
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {/* Image Modal */}
+      {selectedImage && (
+        <div className="modal">
+          <div className="modal-content">
+            <span className="close" onClick={() => setSelectedImage(null)}>
+              &times;
+            </span>
+            <img src={selectedImage} alt="Vendor" onError={() => alert("Invalid Image Data")} />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Main App component with authentication, fancy navigation, and logout
 const App = () => {
   const [currentPage, setCurrentPage] = useState('login'); // Show login first
@@ -421,6 +592,10 @@ const App = () => {
         return <AllVendors />;
       case 'search':
         return <SearchVendor />;
+      case 'ResultAddition':
+          return < ResultAddition/>; 
+      case 'ResultShow':
+            return < ResultShow/>; 
       case 'login':
         return <Login onLoginSuccess={handleLoginSuccess} />;
       default:
@@ -439,6 +614,8 @@ const App = () => {
           <button className="nav-btn" onClick={() => setCurrentPage('registration')}>Registration</button>
           <button className="nav-btn" onClick={() => setCurrentPage('allVendors')}>All Vendors</button>
           <button className="nav-btn" onClick={() => setCurrentPage('search')}>Search</button>
+          <button className="nav-btn" onClick={() => setCurrentPage('ResultAddition')}>ResultAddition</button>
+          <button className="nav-btn" onClick={() => setCurrentPage('ResultShow')}>ResultShow</button>
           {isAuthenticated && <button className="nav-btn logout" onClick={handleLogout}>Logout</button>}
         </div>
       </nav>
