@@ -3,27 +3,145 @@ import './App.css';
 import { Eye } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable"; 
+import { useRef } from "react";
 
 // Home component with a school-related image
+
 const Home = () => {
+  const [selectedSubject, setSelectedSubject] = useState("");
+  const [meetingActive, setMeetingActive] = useState(false);
+  const jitsiContainer = useRef(null);
+  const jitsiApiRef = useRef(null);
+
+  const subjects = ["DSA", "Competitive_Programming", "Math", "Computer_Network"];
+
+  const startMeeting = async () => {
+    if (!selectedSubject) {
+      alert("Please select a subject.");
+      return;
+    }
+  
+    try {
+      const response = await fetch(`https://cloudvendor-1.onrender.com/cloudvendor/create/${selectedSubject}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+  
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+  
+      const url = await response.text();
+      console.log("Meeting URL from backend:", url); // ✅ Log the URL for debugging
+  
+      if (!url.startsWith("http")) {
+        throw new Error("Invalid meeting URL received from backend.");
+      }
+  
+      // ✅ Open Jitsi meeting in a new tab instead of embedding
+      window.open(url, "_blank");
+    } catch (error) {
+      console.error("Error starting meeting:", error);
+      alert("Failed to start the meeting. Check backend server.");
+    }
+  };
+  
+  const initializeJitsi = (meetingUrl) => {
+    if (typeof window.JitsiMeetExternalAPI !== "function") {
+      console.error("Jitsi Meet API is not available. Check if script is loaded.");
+      return;
+    }
+  
+    const domain = "meet.jit.si";
+    const roomName = new URL(meetingUrl).pathname.split("/").pop();
+  
+    console.log("Initializing Jitsi with room:", roomName);
+  
+    const options = {
+      roomName: roomName,
+      parentNode: jitsiContainer.current,
+      width: "100%",
+      height: "600px",
+      interfaceConfigOverwrite: {
+        SHOW_JITSI_WATERMARK: false,
+        SHOW_WATERMARK_FOR_GUESTS: false,
+        TOOLBAR_BUTTONS: ["microphone", "camera", "chat", "hangup"],
+      },
+    };
+  
+    jitsiApiRef.current = new window.JitsiMeetExternalAPI(domain, options);
+  
+    // ✅ Override the default close event to prevent redirecting
+    jitsiApiRef.current.addEventListener("readyToClose", () => {
+      console.log("Meeting ended. Closing Jitsi...");
+      
+      // ✅ Forcefully remove Jitsi iframe to prevent redirect
+      if (jitsiContainer.current) {
+        jitsiContainer.current.innerHTML = ""; // Remove the Jitsi iframe
+      }
+  
+      // ✅ Destroy Jitsi API instance
+      if (jitsiApiRef.current) {
+        jitsiApiRef.current.dispose();
+        jitsiApiRef.current = null;
+      }
+  
+      // ✅ Hide Jitsi and return to home page
+      setMeetingActive(false);
+    });
+  };
+  
+
   return (
     <div className="page home">
-      <h1>Welcome Home</h1>
-      <div className="home-image-container">
-        {/* Use an alternative image URL for the school campus */}
-        <img
-          src="https://picsum.photos/600/300?random=1"
-          alt="School Campus"
-          className="home-img"
-        />
-      </div>
-      <p>
-        This is the Home page. Use the navigation menu to register vendors, view all vendors, or search for a vendor.
-      </p>
+      {!meetingActive ? (
+        <>
+          <h1>Welcome</h1>
+          <p>Class will start in a few hours.</p>
+
+          <select
+            value={selectedSubject}
+            onChange={(e) => setSelectedSubject(e.target.value)}
+            style={{
+              padding: "10px",
+              fontSize: "16px",
+              margin: "10px",
+              width: "250px",
+              borderRadius: "5px",
+              border: "1px solid #ccc",
+            }}
+          >
+            <option value="">Select a Subject</option>
+            {subjects.map((subject) => (
+              <option key={subject} value={subject}>
+                {subject.replace("_", " ")}
+              </option>
+            ))}
+          </select>
+
+          <button
+            onClick={startMeeting}
+            style={{
+              padding: "10px 20px",
+              fontSize: "16px",
+              backgroundColor: "#007bff",
+              color: "#fff",
+              border: "none",
+              borderRadius: "5px",
+              cursor: "pointer",
+            }}
+          >
+            Start / Join {selectedSubject || "Class"} Meeting
+          </button>
+        </>
+      ) : (
+        <div ref={jitsiContainer} style={{ width: "100%", height: "600px" }} />
+      )}
     </div>
   );
 };
-
 // Login component with a school-related image above the login form.
 // It validates that the email ends with "@gmail.com" and that the password is at least 5 characters.
 const Login = ({ onLoginSuccess }) => {
