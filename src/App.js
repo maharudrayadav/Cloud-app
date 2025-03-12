@@ -694,6 +694,74 @@ const ResultAddition = () => {
       </div>
     );
   };
+const FaceComponent = () => {
+    const videoRef = useRef(null);
+    const canvasRef = useRef(null);
+    const [message, setMessage] = useState("");
+
+    // Start Webcam
+    const startCamera = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            videoRef.current.srcObject = stream;
+        } catch (error) {
+            console.error("Error accessing webcam:", error);
+            setMessage("Webcam access denied.");
+        }
+    };
+
+    // Capture Image and Send to API
+    const captureImage = async (endpoint) => {
+        const video = videoRef.current;
+        const canvas = canvasRef.current;
+        const context = canvas.getContext("2d");
+
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        canvas.toBlob(async (blob) => {
+            const formData = new FormData();
+            formData.append("image", blob, "frame.jpg");
+
+            try {
+                const response = await fetch(`https://your-api-on-render.com/${endpoint}`, {
+                    method: "POST",
+                    body: formData,
+                });
+                const data = await response.json();
+                setMessage(data.message || "Success");
+            } catch (error) {
+                console.error("Error:", error);
+                setMessage("Error processing request.");
+            }
+        }, "image/jpeg");
+    };
+
+    return (
+        <div className="flex flex-col items-center p-4">
+            <video ref={videoRef} autoPlay className="w-96 border-2 border-gray-500"></video>
+            <canvas ref={canvasRef} style={{ display: "none" }}></canvas>
+
+            <div className="flex space-x-4 mt-4">
+                <button onClick={startCamera} className="px-4 py-2 bg-blue-500 text-white rounded">
+                    Start Camera
+                </button>
+                <button onClick={() => captureImage("face-detection")} className="px-4 py-2 bg-green-500 text-white rounded">
+                    Face Detect
+                </button>
+                <button onClick={() => captureImage("store-face")} className="px-4 py-2 bg-yellow-500 text-white rounded">
+                    Data Store
+                </button>
+                <button onClick={() => captureImage("face-recognition")} className="px-4 py-2 bg-red-500 text-white rounded">
+                    Face Recognize
+                </button>
+            </div>
+
+            {message && <p className="mt-4 text-lg text-gray-700">{message}</p>}
+        </div>
+    );
+};
 
 
 // Main App component with authentication, fancy navigation, and logout
@@ -739,6 +807,8 @@ const App = () => {
         return <ResultAddition />;
       case 'ResultShow':
         return <ResultShow />;
+      case 'FaceComponent':
+        return <FaceComponent />;
       default:
         return <Login onLoginSuccess={handleLoginSuccess} />;
     }
@@ -759,6 +829,7 @@ const App = () => {
               <button className="nav-btn" onClick={() => setCurrentPage('search')}>Search</button>
               <button className="nav-btn" onClick={() => setCurrentPage('ResultAddition')}>Result Addition</button>
               <button className="nav-btn" onClick={() => setCurrentPage('ResultShow')}>Result Show</button>
+              <button className="nav-btn" onClick={() => setCurrentPage('FaceComponent')}>FaceComponent</button>
               <button className="nav-btn logout" onClick={handleLogout}>Logout</button>
             </>
           )}
