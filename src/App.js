@@ -698,6 +698,7 @@ const FaceComponent = () => {
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
     const [message, setMessage] = useState("");
+    const [userName, setUserName] = useState(""); // State to store user's name
 
     // Start Webcam
     const startCamera = async () => {
@@ -711,7 +712,32 @@ const FaceComponent = () => {
     };
 
     // Capture Image and Send to API
-    const captureImage = async (endpoint) => {
+    const captureImage = async (endpoint, requestType = "image") => {
+        const apiUrl = `https://mypythonproject.onrender.com/${endpoint}`;
+
+        if (requestType === "json") {
+            if (!userName.trim()) {
+                setMessage("Please enter your name.");
+                return;
+            }
+
+            // 🔹 JSON API Call
+            try {
+                const response = await fetch(apiUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name: userName }),
+                });
+                const data = await response.json();
+                setMessage(data.message || "Success");
+            } catch (error) {
+                console.error("Error:", error);
+                setMessage("Error processing request.");
+            }
+            return;
+        }
+
+        // 🔹 Image API Call
         const video = videoRef.current;
         const canvas = canvasRef.current;
         const context = canvas.getContext("2d");
@@ -725,8 +751,6 @@ const FaceComponent = () => {
             formData.append("image", blob, "frame.jpg");
 
             try {
-                // ✅ Dynamically select the API endpoint
-                const apiUrl = `https://mypythonproject.onrender.com/${endpoint}`;
                 const response = await fetch(apiUrl, {
                     method: "POST",
                     body: formData,
@@ -746,6 +770,15 @@ const FaceComponent = () => {
             <video ref={videoRef} autoPlay className="w-96 border-2 border-gray-500"></video>
             <canvas ref={canvasRef} style={{ display: "none" }}></canvas>
 
+            {/* Name Input Field */}
+            <input
+                type="text"
+                placeholder="Enter your name"
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+                className="mt-4 p-2 border rounded w-80"
+            />
+
             <div className="flex space-x-4 mt-4">
                 <button onClick={startCamera} className="px-4 py-2 bg-blue-500 text-white rounded">
                     Start Camera
@@ -758,6 +791,9 @@ const FaceComponent = () => {
                 </button>
                 <button onClick={() => captureImage("recognize_faces")} className="px-4 py-2 bg-red-500 text-white rounded">
                     Face Recognize
+                </button>
+                <button onClick={() => captureImage("capture_faces", "json")} className="px-4 py-2 bg-purple-500 text-white rounded">
+                    Send JSON
                 </button>
             </div>
 
