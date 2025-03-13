@@ -695,33 +695,21 @@ const ResultAddition = () => {
     );
   };
     // Capture Image and Send to API
-
 const FaceComponent = () => {
     const videoRef = useRef(null);
     const [userName, setUserName] = useState("");
     const [isCapturing, setIsCapturing] = useState(false);
     const [message, setMessage] = useState("");
 
-    const startCameraAndCapture = async () => {
-        if (!userName.trim()) {
-            setMessage("Please enter your name.");
-            return;
-        }
-
-        setMessage("Starting camera...");
-        setIsCapturing(true);
-
+    const startCamera = async () => {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ video: true });
             videoRef.current.srcObject = stream;
-
-            await captureImages(); // Capture 10 images
-            stopCamera();
-            setMessage("Captured and sent 10 images. Camera stopped.");
+            return stream;
         } catch (error) {
             console.error("Error accessing webcam:", error);
             setMessage("Webcam access denied.");
-            setIsCapturing(false);
+            return null;
         }
     };
 
@@ -733,10 +721,26 @@ const FaceComponent = () => {
         setIsCapturing(false);
     };
 
+    const startCameraAndCapture = async () => {
+        if (!userName.trim()) {
+            setMessage("Please enter your name.");
+            return;
+        }
+
+        setMessage("Starting camera...");
+        setIsCapturing(true);
+
+        const stream = await startCamera();
+        if (!stream) return;
+
+        await captureImages();
+        stopCamera();
+        setMessage("Captured and sent 10 images. Camera stopped.");
+    };
+
     const captureImages = async () => {
         for (let i = 1; i <= 10; i++) {
-            await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second per capture
-
+            await new Promise((resolve) => setTimeout(resolve, 1000));
             if (!videoRef.current) return;
 
             const canvas = document.createElement("canvas");
@@ -780,6 +784,73 @@ const FaceComponent = () => {
         });
     };
 
+    const trainModel = async () => {
+        if (!userName.trim()) {
+            setMessage("Please enter your name.");
+            return;
+        }
+
+        setMessage("Training model...");
+
+        try {
+            const response = await fetch("https://mypythonproject.onrender.com/train_model", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ user_name: userName })
+            });
+
+            const data = await response.json();
+            setMessage(data.message || "Training completed.");
+        } catch (error) {
+            console.error("Training error:", error);
+            setMessage("Error training model.");
+        }
+    };
+
+    const recognizeFace = async () => {
+        if (!userName.trim()) {
+            setMessage("Please enter your name.");
+            return;
+        }
+
+        setMessage("Starting camera for recognition...");
+        setIsCapturing(true);
+
+        const stream = await startCamera();
+        if (!stream) return;
+
+        setTimeout(async () => {
+            const canvas = document.createElement("canvas");
+            const video = videoRef.current;
+            canvas.width = video.videoWidth || 640;
+            canvas.height = video.videoHeight || 480;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            canvas.toBlob(async (blob) => {
+                const formData = new FormData();
+                formData.append("image", blob, "recognition.jpg");
+
+                try {
+                    const response = await fetch("https://mypythonproject.onrender.com/recognize", {
+                        method: "POST",
+                        body: formData
+                    });
+
+                    const data = await response.json();
+                    setMessage(data.recognized_faces ? `Recognized: ${JSON.stringify(data.recognized_faces)}` : "No face recognized.");
+                } catch (error) {
+                    console.error("Recognition error:", error);
+                    setMessage("Error recognizing face.");
+                }
+
+                stopCamera();
+            }, "image/jpeg");
+        }, 2000); // Capture image after 2 seconds
+    };
+
     return (
         <div className="flex flex-col items-center p-4">
             <video ref={videoRef} autoPlay className="w-96 border-2 border-gray-500"></video>
@@ -800,10 +871,26 @@ const FaceComponent = () => {
                 {isCapturing ? "Capturing..." : "Start & Capture"}
             </button>
 
+            <button
+                onClick={trainModel}
+                className="mt-2 px-4 py-2 text-white bg-green-500 rounded"
+            >
+                Train Model
+            </button>
+
+            <button
+                onClick={recognizeFace}
+                className="mt-2 px-4 py-2 text-white bg-purple-500 rounded"
+                disabled={isCapturing}
+            >
+                Recognize Face
+            </button>
+
             {message && <p className="mt-4 text-lg text-gray-700">{message}</p>}
         </div>
     );
 };
+
 // Main App component with authentication, fancy navigation, and logout
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
