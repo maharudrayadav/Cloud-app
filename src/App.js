@@ -698,13 +698,21 @@ const FaceComponent = () => {
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
     const [message, setMessage] = useState("");
-    const [userName, setUserName] = useState(""); // State to store user's name
+    const [userName, setUserName] = useState(""); // State for student's name
 
-    // Start Webcam
-    const startCamera = async () => {
+    // Start Camera and Auto Capture
+    const startCameraAndDetect = async () => {
+        if (!userName.trim()) {
+            setMessage("Please enter your name.");
+            return;
+        }
+
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ video: true });
             videoRef.current.srcObject = stream;
+
+            // Wait a bit before capturing the image
+            setTimeout(() => captureImage(), 2000);
         } catch (error) {
             console.error("Error accessing webcam:", error);
             setMessage("Webcam access denied.");
@@ -712,63 +720,52 @@ const FaceComponent = () => {
     };
 
     // Capture Image and Send to API
-    const captureImage = async (endpoint, requestType = "image") => {
-        const apiUrl = `https://mypythonproject.onrender.com/${endpoint}`;
+   const FaceComponent = () => {
+    const videoRef = useRef(null);
+    const [message, setMessage] = useState("");
+    const [userName, setUserName] = useState(""); // State for student's name
 
-        if (requestType === "json") {
-            if (!userName.trim()) {
-                setMessage("Please enter your name.");
-                return;
-            }
-
-            // 🔹 JSON API Call
-            try {
-                const response = await fetch(apiUrl, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ name: userName }),
-                });
-                const data = await response.json();
-                setMessage(data.message || "Success");
-            } catch (error) {
-                console.error("Error:", error);
-                setMessage("Error processing request.");
-            }
+    // Start Camera and Send Name as JSON
+    const startCameraAndSendName = async () => {
+        if (!userName.trim()) {
+            setMessage("Please enter your name.");
             return;
         }
 
-        // 🔹 Image API Call
-        const video = videoRef.current;
-        const canvas = canvasRef.current;
-        const context = canvas.getContext("2d");
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            videoRef.current.srcObject = stream;
 
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            // Wait a bit before sending the JSON request
+            setTimeout(() => sendNameAsJson(), 2000);
+        } catch (error) {
+            console.error("Error accessing webcam:", error);
+            setMessage("Webcam access denied.");
+        }
+    };
 
-        canvas.toBlob(async (blob) => {
-            const formData = new FormData();
-            formData.append("image", blob, "frame.jpg");
+    // Send Name as JSON to API
+    const sendNameAsJson = async () => {
+        const apiUrl = `https://mypythonproject.onrender.com/capture_faces`;
 
-            try {
-                const response = await fetch(apiUrl, {
-                    method: "POST",
-                    body: formData,
-                });
+        try {
+            const response = await fetch(apiUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: userName }),
+            });
 
-                const data = await response.json();
-                setMessage(data.message || "Success");
-            } catch (error) {
-                console.error("Error:", error);
-                setMessage("Error processing request.");
-            }
-        }, "image/jpeg");
+            const data = await response.json();
+            setMessage(data.message || "Name sent successfully");
+        } catch (error) {
+            console.error("Error:", error);
+            setMessage("Error processing request.");
+        }
     };
 
     return (
         <div className="flex flex-col items-center p-4">
             <video ref={videoRef} autoPlay className="w-96 border-2 border-gray-500"></video>
-            <canvas ref={canvasRef} style={{ display: "none" }}></canvas>
 
             {/* Name Input Field */}
             <input
@@ -779,30 +776,14 @@ const FaceComponent = () => {
                 className="mt-4 p-2 border rounded w-80"
             />
 
-            <div className="flex space-x-4 mt-4">
-                <button onClick={startCamera} className="px-4 py-2 bg-blue-500 text-white rounded">
-                    Start Camera
-                </button>
-                <button onClick={() => captureImage("detect_faces")} className="px-4 py-2 bg-green-500 text-white rounded">
-                    Face Detect
-                </button>
-                <button onClick={() => captureImage("store_faces")} className="px-4 py-2 bg-yellow-500 text-white rounded">
-                    Data Store
-                </button>
-                <button onClick={() => captureImage("recognize_faces")} className="px-4 py-2 bg-red-500 text-white rounded">
-                    Face Recognize
-                </button>
-                <button onClick={() => captureImage("capture_faces", "json")} className="px-4 py-2 bg-purple-500 text-white rounded">
-                    Send JSON
-                </button>
-            </div>
+            <button onClick={startCameraAndSendName} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded">
+                Start Camera & Send Name
+            </button>
 
             {message && <p className="mt-4 text-lg text-gray-700">{message}</p>}
         </div>
     );
 };
-
-
 // Main App component with authentication, fancy navigation, and logout
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
