@@ -715,7 +715,7 @@ const FaceComponent = () => {
 
     const stopCamera = () => {
         if (videoRef.current && videoRef.current.srcObject) {
-            videoRef.current.srcObject.getTracks().forEach(track => track.stop());
+            videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
             videoRef.current.srcObject = null;
         }
         setIsCapturing(false);
@@ -796,15 +796,19 @@ const FaceComponent = () => {
             const response = await fetch("https://mypythonproject.onrender.com/train_model", {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ user_name: userName })
+                body: JSON.stringify({ user_name: userName }),
             });
 
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
             const data = await response.json();
-            setMessage(data.message || "Training completed.");
+            setMessage(`Training Result: ${data.message || "Success"}`);
         } catch (error) {
-            console.error("Training error:", error);
+            console.error("Error training model:", error);
             setMessage("Error training model.");
         }
     };
@@ -836,7 +840,7 @@ const FaceComponent = () => {
                 try {
                     const response = await fetch("https://mypythonproject.onrender.com/recognize", {
                         method: "POST",
-                        body: formData
+                        body: formData,
                     });
 
                     const data = await response.json();
@@ -890,7 +894,6 @@ const FaceComponent = () => {
         </div>
     );
 };
-
 // Main App component with authentication, fancy navigation, and logout
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
