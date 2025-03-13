@@ -695,11 +695,12 @@ const ResultAddition = () => {
     );
   };
     // Capture Image and Send to API
+
 const FaceComponent = () => {
     const videoRef = useRef(null);
-    const [message, setMessage] = useState("");
     const [userName, setUserName] = useState("");
     const [isCapturing, setIsCapturing] = useState(false);
+    const [message, setMessage] = useState("");
 
     const startCameraAndCapture = async () => {
         if (!userName.trim()) {
@@ -714,10 +715,9 @@ const FaceComponent = () => {
             const stream = await navigator.mediaDevices.getUserMedia({ video: true });
             videoRef.current.srcObject = stream;
 
-            await captureAndSendImages(); // Capture and send images
-
+            await captureImages(); // Capture 10 images
             stopCamera();
-            setMessage("Captured 10 images. Camera stopped.");
+            setMessage("Captured and sent 10 images. Camera stopped.");
         } catch (error) {
             console.error("Error accessing webcam:", error);
             setMessage("Webcam access denied.");
@@ -726,51 +726,58 @@ const FaceComponent = () => {
     };
 
     const stopCamera = () => {
-        const stream = videoRef.current?.srcObject;
-        if (stream) {
-            stream.getTracks().forEach(track => track.stop());
+        if (videoRef.current && videoRef.current.srcObject) {
+            videoRef.current.srcObject.getTracks().forEach(track => track.stop());
             videoRef.current.srcObject = null;
         }
         setIsCapturing(false);
     };
 
-    const captureAndSendImages = async () => {
+    const captureImages = async () => {
         for (let i = 1; i <= 10; i++) {
+            await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second per capture
+
             if (!videoRef.current) return;
 
-            const video = videoRef.current;
             const canvas = document.createElement("canvas");
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
+            const video = videoRef.current;
+            canvas.width = video.videoWidth || 640;
+            canvas.height = video.videoHeight || 480;
             const ctx = canvas.getContext("2d");
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            await new Promise((resolve) => {
-                canvas.toBlob(async (blob) => {
-                    const formData = new FormData();
-                    const imageName = `${userName}_${i}.jpg`;
-                    formData.append("image", blob, imageName);
-                    formData.append("name", userName);
-
-                    try {
-                        const response = await fetch("https://mypythonproject.onrender.com/capture_faces", {
-                            method: "POST",
-                            body: formData,
-                        });
-
-                        const data = await response.json();
-                        setMessage(`Image ${i}/10 sent: ${data.message || "Success"}`);
-                    } catch (error) {
-                        console.error("Error sending image:", error);
-                        setMessage("Error uploading image.");
-                    }
-
-                    resolve();
-                }, "image/jpeg");
-            });
-
-            await new Promise((res) => setTimeout(res, 1000)); // Delay to prevent API overload
+            await sendImage(canvas, i);
         }
+    };
+
+    const sendImage = async (canvas, count) => {
+        return new Promise((resolve) => {
+            canvas.toBlob(async (blob) => {
+                const formData = new FormData();
+                const imageName = `${userName}_${count}.jpg`;
+                formData.append("image", blob, imageName);
+                formData.append("name", userName);
+
+                try {
+                    const response = await fetch("https://mypythonproject.onrender.com/capture_faces", {
+                        method: "POST",
+                        body: formData,
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        setMessage(`Image ${count}/10 sent: ${data.message || "Success"}`);
+                    } else {
+                        setMessage(`Error uploading image ${count}.`);
+                    }
+                } catch (error) {
+                    console.error("Upload error:", error);
+                    setMessage(`Error uploading image ${count}.`);
+                }
+
+                resolve();
+            }, "image/jpeg");
+        });
     };
 
     return (
@@ -797,7 +804,6 @@ const FaceComponent = () => {
         </div>
     );
 };
-
 // Main App component with authentication, fancy navigation, and logout
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
