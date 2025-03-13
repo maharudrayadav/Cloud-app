@@ -813,7 +813,7 @@ const FaceComponent = () => {
         }
     };
 
-    const recognizeFace = async () => {
+   const recognizeFace = async () => {
     if (!userName.trim()) {
         setMessage("Please enter your name.");
         return;
@@ -835,7 +835,7 @@ const FaceComponent = () => {
 
         canvas.toBlob(async (blob) => {
             const formData = new FormData();
-            formData.append("image", blob, "recognition.jpg");
+            formData.append("file", blob, "recognition.jpg");
             formData.append("username", userName); // Add username
 
             try {
