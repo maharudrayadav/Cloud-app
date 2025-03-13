@@ -814,46 +814,45 @@ const FaceComponent = () => {
     };
 
     const recognizeFace = async () => {
-        if (!userName.trim()) {
-            setMessage("Please enter your name.");
-            return;
-        }
+    if (!userName.trim()) {
+        setMessage("Please enter your name.");
+        return;
+    }
 
-        setMessage("Starting camera for recognition...");
-        setIsCapturing(true);
+    setMessage("Starting camera for recognition...");
+    setIsCapturing(true);
 
-        const stream = await startCamera();
-        if (!stream) return;
+    const stream = await startCamera();
+    if (!stream) return;
 
-        setTimeout(async () => {
-            const canvas = document.createElement("canvas");
-            const video = videoRef.current;
-            canvas.width = video.videoWidth || 640;
-            canvas.height = video.videoHeight || 480;
-            const ctx = canvas.getContext("2d");
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    setTimeout(async () => {
+        const canvas = document.createElement("canvas");
+        const video = videoRef.current;
+        canvas.width = video.videoWidth || 640;
+        canvas.height = video.videoHeight || 480;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            canvas.toBlob(async (blob) => {
-                const formData = new FormData();
-                formData.append("image", blob, "recognition.jpg");
+        canvas.toBlob(async (blob) => {
+            const formData = new FormData();
+            formData.append("image", blob, "recognition.jpg");
 
-                try {
-                    const response = await fetch("https://mypythonproject.onrender.com/recognize", {
-                        method: "POST",
-                        body: formData,
-                    });
+            try {
+                const response = await fetch(`https://mypythonproject.onrender.com/recognize/${userName}`, { 
+                    method: "GET"
+                });
 
-                    const data = await response.json();
-                    setMessage(data.recognized_faces ? `Recognized: ${JSON.stringify(data.recognized_faces)}` : "No face recognized.");
-                } catch (error) {
-                    console.error("Recognition error:", error);
-                    setMessage("Error recognizing face.");
-                }
+                const data = await response.json();
+                setMessage(data.recognized_faces ? `Recognized: ${JSON.stringify(data.recognized_faces)}` : "No face recognized.");
+            } catch (error) {
+                console.error("Recognition error:", error);
+                setMessage("Error recognizing face.");
+            }
 
-                stopCamera();
-            }, "image/jpeg");
-        }, 2000); // Capture image after 2 seconds
-    };
+            stopCamera();
+        }, "image/jpeg");
+    }, 2000);
+};
 
     return (
         <div className="flex flex-col items-center p-4">
