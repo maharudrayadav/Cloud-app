@@ -725,10 +725,13 @@ const FaceComponent = () => {
             formData.append("image", blob, "frame.jpg");
 
             try {
-                const response = await fetch(`https://your-api-on-render.com/${endpoint}`, {
+                // ✅ Dynamically select the API endpoint
+                const apiUrl = `https://mypythonproject.onrender.com/${endpoint}`;
+                const response = await fetch(apiUrl, {
                     method: "POST",
                     body: formData,
                 });
+
                 const data = await response.json();
                 setMessage(data.message || "Success");
             } catch (error) {
@@ -747,13 +750,13 @@ const FaceComponent = () => {
                 <button onClick={startCamera} className="px-4 py-2 bg-blue-500 text-white rounded">
                     Start Camera
                 </button>
-                <button onClick={() => captureImage("face-detection")} className="px-4 py-2 bg-green-500 text-white rounded">
+                <button onClick={() => captureImage("detect_faces")} className="px-4 py-2 bg-green-500 text-white rounded">
                     Face Detect
                 </button>
-                <button onClick={() => captureImage("store-face")} className="px-4 py-2 bg-yellow-500 text-white rounded">
+                <button onClick={() => captureImage("store_faces")} className="px-4 py-2 bg-yellow-500 text-white rounded">
                     Data Store
                 </button>
-                <button onClick={() => captureImage("face-recognition")} className="px-4 py-2 bg-red-500 text-white rounded">
+                <button onClick={() => captureImage("recognize_faces")} className="px-4 py-2 bg-red-500 text-white rounded">
                     Face Recognize
                 </button>
             </div>
