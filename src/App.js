@@ -784,6 +784,7 @@ const FaceComponent = () => {
         </div>
     );
 };
+
 // Main App component with authentication, fancy navigation, and logout
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
