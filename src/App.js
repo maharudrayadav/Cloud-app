@@ -698,9 +698,8 @@ const ResultAddition = () => {
   const FaceComponent = () => {
     const videoRef = useRef(null);
     const [message, setMessage] = useState("");
-    const [userName, setUserName] = useState(""); // State for student's name
+    const [userName, setUserName] = useState("");
 
-    // Start Camera
     const startCamera = async () => {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -711,7 +710,6 @@ const ResultAddition = () => {
         }
     };
 
-    // Capture Image and Send to Backend
     const captureAndSendImage = async () => {
         if (!userName.trim()) {
             setMessage("Please enter your name.");
@@ -719,7 +717,6 @@ const ResultAddition = () => {
         }
 
         try {
-            // Capture image from video stream
             const video = videoRef.current;
             const canvas = document.createElement("canvas");
             canvas.width = video.videoWidth;
@@ -727,7 +724,6 @@ const ResultAddition = () => {
             const ctx = canvas.getContext("2d");
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            // Convert canvas to Blob
             canvas.toBlob(async (blob) => {
                 const formData = new FormData();
                 formData.append("image", blob, `${userName}.jpg`);
@@ -737,7 +733,7 @@ const ResultAddition = () => {
 
                 const response = await fetch(apiUrl, {
                     method: "POST",
-                    body: formData, // Send image + name
+                    body: formData,
                 });
 
                 const data = await response.json();
@@ -753,7 +749,6 @@ const ResultAddition = () => {
         <div className="flex flex-col items-center p-4">
             <video ref={videoRef} autoPlay className="w-96 border-2 border-gray-500"></video>
 
-            {/* Name Input Field */}
             <input
                 type="text"
                 placeholder="Enter your name"
@@ -774,6 +769,7 @@ const ResultAddition = () => {
         </div>
     );
 };
+
 // Main App component with authentication, fancy navigation, and logout
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
