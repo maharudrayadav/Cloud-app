@@ -694,31 +694,6 @@ const ResultAddition = () => {
       </div>
     );
   };
-const FaceComponent = () => {
-    const videoRef = useRef(null);
-    const canvasRef = useRef(null);
-    const [message, setMessage] = useState("");
-    const [userName, setUserName] = useState(""); // State for student's name
-
-    // Start Camera and Auto Capture
-    const startCameraAndDetect = async () => {
-        if (!userName.trim()) {
-            setMessage("Please enter your name.");
-            return;
-        }
-
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-            videoRef.current.srcObject = stream;
-
-            // Wait a bit before capturing the image
-            setTimeout(() => captureImage(), 2000);
-        } catch (error) {
-            console.error("Error accessing webcam:", error);
-            setMessage("Webcam access denied.");
-        }
-    };
-
     // Capture Image and Send to API
    const FaceComponent = () => {
     const videoRef = useRef(null);
