@@ -699,16 +699,29 @@ const FaceComponent = () => {
     const videoRef = useRef(null);
     const [message, setMessage] = useState("");
     const [userName, setUserName] = useState("");
-    const [captureCount, setCaptureCount] = useState(0);
+    const [isCapturing, setIsCapturing] = useState(false);
 
-    const startCamera = async () => {
+    const startCameraAndCapture = async () => {
+        if (!userName.trim()) {
+            setMessage("Please enter your name.");
+            return;
+        }
+
+        setMessage("Starting camera...");
+        setIsCapturing(true);
+
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ video: true });
             videoRef.current.srcObject = stream;
-            setCaptureCount(0); // Reset capture count when starting
+
+            await captureAndSendImages(); // Capture and send images
+
+            stopCamera();
+            setMessage("Captured 10 images. Camera stopped.");
         } catch (error) {
             console.error("Error accessing webcam:", error);
             setMessage("Webcam access denied.");
+            setIsCapturing(false);
         }
     };
 
@@ -718,21 +731,13 @@ const FaceComponent = () => {
             stream.getTracks().forEach(track => track.stop());
             videoRef.current.srcObject = null;
         }
+        setIsCapturing(false);
     };
 
-    const captureAndSendImage = async () => {
-        if (!userName.trim()) {
-            setMessage("Please enter your name.");
-            return;
-        }
+    const captureAndSendImages = async () => {
+        for (let i = 1; i <= 10; i++) {
+            if (!videoRef.current) return;
 
-        if (captureCount >= 10) {
-            setMessage("Captured 10 images. Camera stopped.");
-            stopCamera();
-            return;
-        }
-
-        try {
             const video = videoRef.current;
             const canvas = document.createElement("canvas");
             canvas.width = video.videoWidth;
@@ -740,34 +745,31 @@ const FaceComponent = () => {
             const ctx = canvas.getContext("2d");
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            canvas.toBlob(async (blob) => {
-                const formData = new FormData();
-                const imageName = `${userName}_${captureCount + 1}.jpg`;
-                formData.append("image", blob, imageName);
-                formData.append("name", userName);
+            await new Promise((resolve) => {
+                canvas.toBlob(async (blob) => {
+                    const formData = new FormData();
+                    const imageName = `${userName}_${i}.jpg`;
+                    formData.append("image", blob, imageName);
+                    formData.append("name", userName);
 
-                const apiUrl = `https://mypythonproject.onrender.com/capture_faces`;
+                    try {
+                        const response = await fetch("https://mypythonproject.onrender.com/capture_faces", {
+                            method: "POST",
+                            body: formData,
+                        });
 
-                const response = await fetch(apiUrl, {
-                    method: "POST",
-                    body: formData,
-                });
+                        const data = await response.json();
+                        setMessage(`Image ${i}/10 sent: ${data.message || "Success"}`);
+                    } catch (error) {
+                        console.error("Error sending image:", error);
+                        setMessage("Error uploading image.");
+                    }
 
-                const data = await response.json();
-                setMessage(`Image ${captureCount + 1}/10 sent: ${data.message || "Success"}`);
+                    resolve();
+                }, "image/jpeg");
+            });
 
-                setCaptureCount(prevCount => prevCount + 1);
-
-                if (captureCount + 1 === 10) {
-                    setTimeout(() => {
-                        setMessage("Captured 10 images. Camera stopped.");
-                        stopCamera();
-                    }, 1000);
-                }
-            }, "image/jpeg");
-        } catch (error) {
-            console.error("Error capturing image:", error);
-            setMessage("Error capturing image.");
+            await new Promise((res) => setTimeout(res, 1000)); // Delay to prevent API overload
         }
     };
 
@@ -783,19 +785,19 @@ const FaceComponent = () => {
                 className="mt-4 p-2 border rounded w-80"
             />
 
-            <button onClick={startCamera} className="mt-4 px-4 py-2 bg-green-500 text-white rounded">
-                Start Camera
-            </button>
-
-            <button onClick={captureAndSendImage} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded">
-                Capture Image & Send
+            <button
+                onClick={startCameraAndCapture}
+                className={`mt-4 px-4 py-2 text-white rounded ${isCapturing ? "bg-gray-500" : "bg-blue-500"}`}
+                disabled={isCapturing}
+            >
+                {isCapturing ? "Capturing..." : "Start & Capture"}
             </button>
 
             {message && <p className="mt-4 text-lg text-gray-700">{message}</p>}
         </div>
     );
 };
- 
+
 // Main App component with authentication, fancy navigation, and logout
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
