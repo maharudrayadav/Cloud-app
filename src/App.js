@@ -695,24 +695,40 @@ const ResultAddition = () => {
     );
   };
     // Capture Image and Send to API
-  const FaceComponent = () => {
+const FaceComponent = () => {
     const videoRef = useRef(null);
     const [message, setMessage] = useState("");
     const [userName, setUserName] = useState("");
+    const [captureCount, setCaptureCount] = useState(0);
 
     const startCamera = async () => {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ video: true });
             videoRef.current.srcObject = stream;
+            setCaptureCount(0); // Reset capture count when starting
         } catch (error) {
             console.error("Error accessing webcam:", error);
             setMessage("Webcam access denied.");
         }
     };
 
+    const stopCamera = () => {
+        const stream = videoRef.current?.srcObject;
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            videoRef.current.srcObject = null;
+        }
+    };
+
     const captureAndSendImage = async () => {
         if (!userName.trim()) {
             setMessage("Please enter your name.");
+            return;
+        }
+
+        if (captureCount >= 10) {
+            setMessage("Captured 10 images. Camera stopped.");
+            stopCamera();
             return;
         }
 
@@ -726,7 +742,8 @@ const ResultAddition = () => {
 
             canvas.toBlob(async (blob) => {
                 const formData = new FormData();
-                formData.append("image", blob, `${userName}.jpg`);
+                const imageName = `${userName}_${captureCount + 1}.jpg`;
+                formData.append("image", blob, imageName);
                 formData.append("name", userName);
 
                 const apiUrl = `https://mypythonproject.onrender.com/capture_faces`;
@@ -737,7 +754,16 @@ const ResultAddition = () => {
                 });
 
                 const data = await response.json();
-                setMessage(data.message || "Image sent successfully");
+                setMessage(`Image ${captureCount + 1}/10 sent: ${data.message || "Success"}`);
+
+                setCaptureCount(prevCount => prevCount + 1);
+
+                if (captureCount + 1 === 10) {
+                    setTimeout(() => {
+                        setMessage("Captured 10 images. Camera stopped.");
+                        stopCamera();
+                    }, 1000);
+                }
             }, "image/jpeg");
         } catch (error) {
             console.error("Error capturing image:", error);
@@ -769,7 +795,7 @@ const ResultAddition = () => {
         </div>
     );
 };
-
+ 
 // Main App component with authentication, fancy navigation, and logout
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
