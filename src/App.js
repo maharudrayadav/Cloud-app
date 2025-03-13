@@ -695,46 +695,57 @@ const ResultAddition = () => {
     );
   };
     // Capture Image and Send to API
-   const FaceComponent = () => {
+  const FaceComponent = () => {
     const videoRef = useRef(null);
     const [message, setMessage] = useState("");
     const [userName, setUserName] = useState(""); // State for student's name
 
-    // Start Camera and Send Name as JSON
-    const startCameraAndSendName = async () => {
-        if (!userName.trim()) {
-            setMessage("Please enter your name.");
-            return;
-        }
-
+    // Start Camera
+    const startCamera = async () => {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ video: true });
             videoRef.current.srcObject = stream;
-
-            // Wait a bit before sending the JSON request
-            setTimeout(() => sendNameAsJson(), 2000);
         } catch (error) {
             console.error("Error accessing webcam:", error);
             setMessage("Webcam access denied.");
         }
     };
 
-    // Send Name as JSON to API
-    const sendNameAsJson = async () => {
-        const apiUrl = `https://mypythonproject.onrender.com/capture_faces`;
+    // Capture Image and Send to Backend
+    const captureAndSendImage = async () => {
+        if (!userName.trim()) {
+            setMessage("Please enter your name.");
+            return;
+        }
 
         try {
-            const response = await fetch(apiUrl, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name: userName }),
-            });
+            // Capture image from video stream
+            const video = videoRef.current;
+            const canvas = document.createElement("canvas");
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            const data = await response.json();
-            setMessage(data.message || "Name sent successfully");
+            // Convert canvas to Blob
+            canvas.toBlob(async (blob) => {
+                const formData = new FormData();
+                formData.append("image", blob, `${userName}.jpg`);
+                formData.append("name", userName);
+
+                const apiUrl = `https://mypythonproject.onrender.com/capture_faces`;
+
+                const response = await fetch(apiUrl, {
+                    method: "POST",
+                    body: formData, // Send image + name
+                });
+
+                const data = await response.json();
+                setMessage(data.message || "Image sent successfully");
+            }, "image/jpeg");
         } catch (error) {
-            console.error("Error:", error);
-            setMessage("Error processing request.");
+            console.error("Error capturing image:", error);
+            setMessage("Error capturing image.");
         }
     };
 
@@ -751,15 +762,18 @@ const ResultAddition = () => {
                 className="mt-4 p-2 border rounded w-80"
             />
 
-            <button onClick={startCameraAndSendName} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded">
-                Start Camera & Send Name
+            <button onClick={startCamera} className="mt-4 px-4 py-2 bg-green-500 text-white rounded">
+                Start Camera
+            </button>
+
+            <button onClick={captureAndSendImage} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded">
+                Capture Image & Send
             </button>
 
             {message && <p className="mt-4 text-lg text-gray-700">{message}</p>}
         </div>
     );
 };
-
 // Main App component with authentication, fancy navigation, and logout
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
