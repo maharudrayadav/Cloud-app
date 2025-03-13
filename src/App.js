@@ -835,13 +835,13 @@ const FaceComponent = () => {
 
         canvas.toBlob(async (blob) => {
             const formData = new FormData();
-            formData.append("file", blob, "recognition.jpg");
-            formData.append("username", userName); // Add username
+            formData.append("image", blob, "recognition.jpg"); // Image as file
+            formData.append("username", userName); // Username as form field
 
             try {
                 const response = await fetch("https://mypythonproject.onrender.com/recognize", { 
                     method: "POST",
-                    body: formData, // Send image + username
+                    body: formData,
                 });
 
                 const data = await response.json();
