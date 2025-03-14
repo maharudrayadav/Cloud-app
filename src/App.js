@@ -813,21 +813,23 @@ const FaceComponent = () => {
         }
     };
 
-   const recognizeFace = async () => {
+  const recognizeFace = async () => {
     if (!userName.trim()) {
-        setMessage("Please enter your name.");
+        setMessage("⚠️ Please enter your name.");
         return;
     }
 
-    setMessage("Starting camera for recognition...");
+    setMessage("📸 Capturing image for recognition...");
     setIsCapturing(true);
 
-    const stream = await startCamera();
-    if (!stream) return;
-
-    setTimeout(async () => {
-        const canvas = document.createElement("canvas");
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
         const video = videoRef.current;
+        video.srcObject = stream;
+
+        await new Promise((resolve) => setTimeout(resolve, 2000)); // Allow camera to stabilize
+
+        const canvas = document.createElement("canvas");
         canvas.width = video.videoWidth || 640;
         canvas.height = video.videoHeight || 480;
         const ctx = canvas.getContext("2d");
@@ -835,8 +837,8 @@ const FaceComponent = () => {
 
         canvas.toBlob(async (blob) => {
             const formData = new FormData();
-            formData.append("image", blob, "recognition.jpg"); // Image as file
-            formData.append("username", userName); // Username as form field
+            formData.append("image", blob, "recognition.jpg");
+            formData.append("username", userName);
 
             try {
                 const response = await fetch("https://mypythonproject.onrender.com/recognize", { 
@@ -845,15 +847,31 @@ const FaceComponent = () => {
                 });
 
                 const data = await response.json();
-                setMessage(data.recognized_faces ? `Recognized: ${JSON.stringify(data.recognized_faces)}` : "No face recognized.");
+                setMessage(
+                    data.recognized_faces
+                        ? `✅ Recognized: ${JSON.stringify(data.recognized_faces)}`
+                        : "❌ No face recognized."
+                );
             } catch (error) {
                 console.error("Recognition error:", error);
-                setMessage("Error recognizing face.");
+                setMessage("❌ Error recognizing face.");
+            } finally {
+                stopCamera();
             }
-
-            stopCamera();
         }, "image/jpeg");
-    }, 2000);
+
+    } catch (error) {
+        console.error("Camera error:", error);
+        setMessage("❌ Unable to access camera.");
+    }
+};
+
+const stopCamera = () => {
+    const video = videoRef.current;
+    if (video && video.srcObject) {
+        video.srcObject.getTracks().forEach(track => track.stop());
+        video.srcObject = null;
+    }
 };
 
     return (
