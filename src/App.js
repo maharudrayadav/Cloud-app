@@ -865,6 +865,7 @@ const FaceComponent = () => {
         setMessage("❌ Unable to access camera.");
     }
 };
+
     return (
         <div className="flex flex-col items-center p-4">
             <video ref={videoRef} autoPlay className="w-96 border-2 border-gray-500"></video>
